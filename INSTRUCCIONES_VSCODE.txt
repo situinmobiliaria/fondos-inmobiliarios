@@ -1,0 +1,192 @@
+=====================================================================
+ INSTRUCCIONES PARA EL AGENTE (VS Code) - PROYECTO SCRAPER DE FONDOS
+ Carpeta de trabajo: Desktop\Fondos
+=====================================================================
+
+Hola, aquí tienes un scraper de fondos de inversión inmobiliarios.
+Hay fondos que no se descargan porque el scraper no reconoce la página,
+y hay otros que se descargan pero no se lee bien la rentabilidad, porque
+cada administradora usa una estructura distinta de página y de factsheet.
+Queremos avanzar paso a paso, así que NO intentes arreglar todo de una vez.
+
+---------------------------------------------------------------------
+0. CONTEXTO DEL PROYECTO (lee esto antes de tocar nada)
+---------------------------------------------------------------------
+Archivos principales:
+- 20260507 Fondos Inmobiliarios.xlsx      -> Listado maestro (administradora, fondo, link).
+- scraper_fondos.py                       -> Scraper general (Playwright + pdfplumber).
+- scraper_especiales.py                   -> Casos especiales (ej. Frontal Trust).
+- retry_fondos.py                         -> Reintenta los fondos con estado fallido.
+- inspeccionar_*.py                       -> Scripts de prueba/inspección previos.
+- registro_rentabilidad.xlsx              -> Salida: una fila por fondo, columnas
+                                             Rent. 1M/3M/6M/YTD/12M/24M/36M/Desde inicio,
+                                             Dividend Yield, TIR, Cap Rate, LTV,
+                                             Rentabilidad Directa, Leverage, Estado, Notas.
+- registro_rentabilidad_ORIGINAL_backup.xlsx -> Respaldo. NO modificar.
+- fondos_pendientes.xlsx                  -> Casos ya conocidos con problema.
+- Fondos Descargados\<Administradora>\<Fondo>\  -> PDFs descargados.
+- Lamina Tipo SITU.pptx                   -> Formato corporativo para el dashboard.
+
+Administradoras actuales (14): Ameris, Asset, Banchile, BICE, BTG Pactual,
+Credicorp, Frontal Trust, Independencia, Inversiones Security, Larrain Vial,
+Principal (carpeta escrita "Princiapl"), Santander, Toesca, Zurich.
+
+Reglas generales:
+- Antes de modificar un .py, haz una copia (ej. scraper_fondos_v2.py) o usa git.
+- No borres PDFs descargados ni el backup del registro.
+- Nunca inventes una rentabilidad: si no se puede leer, deja la celda vacía y
+  explica el motivo en "Estado"/"Notas".
+- Guarda siempre la fecha del factsheet (no solo la fecha de descarga).
+
+---------------------------------------------------------------------
+1. TAREA 1 - DIAGNÓSTICO: LISTADO DE PÁGINAS PROBLEMÁTICAS
+---------------------------------------------------------------------
+Recorre el listado maestro, el registro_rentabilidad.xlsx, fondos_pendientes.xlsx
+y las carpetas de Fondos Descargados, y entrégame un archivo
+diagnostico_fondos.xlsx (y un resumen en el chat) con una fila por fondo:
+
+  Administradora | Fondo | Link | ¿Se descargó? | Archivo | ¿Es el documento
+  correcto (factsheet) o es otro (reglamento, EEFF, etc.)? | ¿Se leyó la
+  rentabilidad? | Categoría del problema | Detalle | Siguiente paso sugerido
+
+Categorías de problema (usar exactamente estas):
+  A. Página no reconocida (no encuentra el link del factsheet)
+  B. Sitio bloquea automatización (403 / Cloudflare / anti-bot)
+  C. Se descargó el documento equivocado
+  D. PDF sin texto (escaneado/imagen) -> requiere OCR
+  E. Rentabilidad en gráfico / tabla no estándar (no extraíble por regex)
+  F. Rentabilidad extraída parcialmente
+  G. La administradora no publica factsheet
+  OK. Todo correcto
+
+Ordena el listado de más fácil a más difícil de resolver y agrúpalo por
+administradora. Luego DETENTE y espera mi confirmación antes de corregir.
+Iremos administradora por administradora.
+
+---------------------------------------------------------------------
+2. TAREA 2 - ARQUITECTURA MULTI-AGENTE (un agente por administradora)
+---------------------------------------------------------------------
+Como cada administradora tiene su propia estructura de página y de factsheet,
+el scraper debe especializarse por administradora en lugar de un único
+scraper genérico.
+
+2.1 Agentes por administradora (uno por cada una)
+    Crear una carpeta  agentes\  con un módulo por administradora:
+        agentes\ameris.py, agentes\asset.py, agentes\banchile.py, agentes\bice.py,
+        agentes\btg.py, agentes\credicorp.py, agentes\frontal_trust.py,
+        agentes\independencia.py, agentes\security.py, agentes\larrainvial.py,
+        agentes\principal.py, agentes\santander.py, agentes\toesca.py,
+        agentes\zurich.py
+    Todos heredan de una clase base común (agentes\base.py) con 3 métodos:
+
+      descargar(fondo)  -> navega la página de ESA administradora, encuentra el
+                           factsheet más reciente y lo guarda en
+                           Fondos Descargados\<Administradora>\<Fondo>\
+                           con nombre AAAAMMDD_<Fondo>.pdf
+      inspeccionar(pdf) -> abre el PDF y verifica que sea un factsheet (no
+                           reglamento/EEFF), detecta fecha del reporte, serie
+                           y dónde está la tabla de rentabilidad
+                           (texto, tabla, gráfico, imagen).
+      extraer(pdf)      -> devuelve un diccionario estándar con los campos del
+                           registro (Rent. 1M ... Leverage), + fecha_reporte,
+                           serie, moneda (UF/CLP), estado, notas.
+
+    Cada agente conoce las particularidades de su sitio (selectores, IDs,
+    si requiere OCR, si la rentabilidad viene en gráfico, qué serie usar,
+    etc.). Documenta esas particularidades en un docstring al inicio de
+    cada módulo, a partir de lo que ya aprendieron los scripts
+    inspeccionar_*.py y scraper_especiales.py.
+
+    Cada agente debe poder correrse de forma aislada para probarlo:
+        python -m agentes.toesca
+
+2.2 Agente master (orquestador)
+    Crear master.py que:
+      - Lee el listado maestro de fondos.
+      - Asigna cada fondo al agente de su administradora.
+      - Ejecuta los agentes en paralelo (asyncio, con límite de concurrencia
+        ~3-4 para no gatillar bloqueos).
+      - Maneja errores: si un agente falla, registra el error y sigue con el resto.
+      - Une todos los resultados en registro_rentabilidad.xlsx (misma estructura
+        de columnas actual) y además en un fondos_data.json para el dashboard.
+      - Regenera diagnostico_fondos.xlsx con el estado actualizado.
+      - Imprime al final un resumen: X OK / Y parciales / Z fallidos, por
+        administradora.
+
+    Uso esperado:
+        python master.py                     (todas)
+        python master.py --adm Toesca        (solo una administradora)
+        python master.py --solo-fallidos     (reemplaza a retry_fondos.py)
+
+2.3 Orden de trabajo sugerido
+    1) Crear base.py + master.py.
+    2) Migrar primero una administradora que ya funcione bien (ej. BTG Pactual)
+       para validar la arquitectura.
+    3) Luego seguir por las problemáticas según el diagnóstico de la Tarea 1,
+       de a una, mostrándome el resultado antes de pasar a la siguiente.
+
+---------------------------------------------------------------------
+3. TAREA 3 - DASHBOARD HTML DE RENTABILIDAD (en paralelo)
+---------------------------------------------------------------------
+Generar dashboard_fondos.html (un solo archivo, se abre con doble clic, sin
+servidor) que lea los datos de fondos_data.json generado por master.py
+(o que master.py incruste los datos dentro del HTML para que funcione offline).
+
+Contenido:
+  - Encabezado con título "Fondos de Inversión Inmobiliarios", fecha de
+    actualización y logo/estilo SITU.
+  - KPIs arriba: N° fondos, N° administradoras, % fondos con datos OK,
+    rentabilidad 12M promedio y mediana, dividend yield promedio.
+  - Tabla principal filtrable y ordenable: Administradora, Fondo, Serie,
+    Fecha reporte, Rent. 1M/3M/6M/YTD/12M/36M/Desde inicio, Dividend Yield,
+    Cap Rate, LTV, Estado. Celdas vacías se muestran como "—" (nunca 0).
+  - Filtros: administradora, tipo de fondo (renta / desarrollo /
+    residencial / industrial / comercial / oficinas), estado de los datos.
+  - Gráficos:
+      * Barras horizontales: Rent. 12M por fondo (ordenado).
+      * Barras agrupadas: rentabilidad promedio por administradora.
+      * Dispersión: Dividend Yield vs LTV (o Cap Rate) por fondo.
+  - Ficha de detalle al hacer clic en un fondo: todos sus indicadores,
+    link a la página y link al PDF local del factsheet.
+  - Indicador visual de calidad del dato (OK / parcial / sin dato).
+
+Formato corporativo SITU (extraído del tema de "Lamina Tipo SITU.pptx"):
+  - Predominantemente GRIS, con el burdeo solo como acento.
+  - Gris oscuro principal (textos, encabezados):  #2D3334
+  - Gris medio (secundario, ejes, bordes):          #5B6670
+  - Fondo:                                          #FFFFFF y grises claros (#F2F2F2 / #E6E7E8)
+  - Acento burdeo (destacar, 1 serie principal):   #96323C
+  - Acentos complementarios para series:            #A26579, #D7A1A7, #51313C
+  - Tipografía: Roboto (títulos pueden usar Helvetica Neue Medium / Roboto Medium).
+  - Estilo sobrio, tipo lámina corporativa: mucho espacio en blanco, líneas
+    finas grises, sin sombras fuertes ni colores saturados.
+  - Revisa las láminas del .pptx para imitar la disposición del título,
+    la franja/encabezado y el pie de página.
+  - Negativos en burdeo, positivos en gris oscuro (no usar rojo/verde chillón).
+  - Formato numérico chileno: coma decimal y 1 decimal (ej. 6,4%).
+
+Librería de gráficos: Chart.js desde CDN (o similar liviana).
+
+---------------------------------------------------------------------
+4. ENTREGABLES Y FORMA DE TRABAJAR
+---------------------------------------------------------------------
+Entregables:
+  1. diagnostico_fondos.xlsx + resumen en chat          (Tarea 1)
+  2. agentes\*.py + master.py                            (Tarea 2)
+  3. registro_rentabilidad.xlsx actualizado + fondos_data.json
+  4. dashboard_fondos.html                               (Tarea 3)
+  5. README.md corto: cómo instalar dependencias y correr todo.
+
+Forma de trabajar:
+  - Paso a paso. Después de cada tarea (o de cada administradora en la
+    Tarea 2) muéstrame qué cambió y qué quedó pendiente, y espera mi OK.
+  - Las Tareas 1 y 3 pueden avanzar en paralelo: el dashboard puede
+    construirse con los datos que ya hay en registro_rentabilidad.xlsx y
+    luego conectarse a fondos_data.json.
+  - Si un sitio bloquea la automatización (ej. BICE), no insistas con
+    técnicas para evadir el bloqueo: márcalo como "descarga manual" e
+    indícame qué archivo debo bajar y dónde dejarlo.
+  - Para PDFs escaneados (ej. Santander) propón OCR (pytesseract/ocrmypdf)
+    y avísame qué hay que instalar antes de hacerlo.
+
+=====================================================================

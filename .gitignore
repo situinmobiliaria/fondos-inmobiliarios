@@ -1,0 +1,16 @@
+# Entorno / cache Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Archivos pesados que no van al repo (a menos que se indique lo contrario)
+*.rar
+Lamina Tipo SITU.pptx
+
+# Backups / temporales de trabajo
+*.bak*
+_scratch/
+
+# Fondos Descargados/ SI se incluye (decision explicita del usuario, Ronda 2):
+# el repo debe servir como acceso a los factsheets, asi que los PDFs se suben.

@@ -1,0 +1,5 @@
+pandas
+openpyxl
+pdfplumber
+playwright
+requests

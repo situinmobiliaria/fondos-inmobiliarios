@@ -1,0 +1,168 @@
+=====================================================================
+ INSTRUCCIONES RONDA 2 - AJUSTES A AGENTES Y DASHBOARD
+ (continúa INSTRUCCIONES_VSCODE.txt y el diagnóstico que entregaste)
+=====================================================================
+
+Gracias por el diagnóstico. Estos son mis comentarios. Tómalos todos en
+cuenta y trabaja en el orden de la sección 6.
+
+---------------------------------------------------------------------
+1. DASHBOARD - LOS GRÁFICOS NO CARGAN (arreglar primero)
+---------------------------------------------------------------------
+Problema: al abrir dashboard_fondos.html los gráficos no aparecen y dice
+que no hay internet. El dashboard NO debe depender de internet para verse.
+
+Solución pedida (en este orden):
+  a) Descargar la librería de gráficos (Chart.js u otra) UNA vez a una
+     carpeta local  vendor\  e incrustarla dentro del HTML (<script> inline)
+     desde build_dashboard.py. Los datos también van incrustados.
+     Resultado: un solo .html que funciona con doble clic y sin conexión.
+  b) Si no puedes descargar la librería, dibuja los gráficos con SVG/JS
+     propio (sin librerías externas).
+  c) Además (independiente de lo anterior), creemos un repositorio en GitHub
+     para trabajar en línea:
+       - Repositorio PRIVADO, nombre sugerido: fondos-inmobiliarios.
+       - Subir código (agentes\, master.py, build_*.py, README.md,
+         requirements.txt), el dashboard y los .json/.xlsx de resultados.
+       - Agregar .gitignore para: __pycache__\, .venv\, *.rar,
+         "Lamina Tipo SITU.pptx" y los PDFs pesados (Fondos Descargados\)
+         salvo que yo diga lo contrario.
+       - Muéstrame los comandos antes de ejecutar el push.
+       - Opcional: publicar el dashboard con GitHub Pages (preguntarme antes).
+
+---------------------------------------------------------------------
+2. CORRECCIONES POR ADMINISTRADORA
+---------------------------------------------------------------------
+Revisa primero la carpeta  Aclaraciones\  (tiene capturas de pantalla de
+cómo se navega cada sitio: Ameris, Independencia, Toesca).
+
+2.1 Independencia (CEFIN Rentas) y Toesca (todos sus fondos)
+    - Ver Aclaraciones\Independencia\ y Aclaraciones\Toesca\.
+    - Independencia: el documento está en la sección desplegable
+      "Información Aportantes" -> "Ficha Trimestral" (también hay
+      "Evolución Valor Cuota" como fuente alternativa).
+    - Toesca: en la página de cada fondo, sección "ARCHIVOS", tarjeta
+      "FACT SHEET <MES> <AÑO>" (el nombre cambia cada mes, no buscar un
+      texto fijo; buscar la tarjeta que contenga "fact sheet" y tomar la
+      de fecha más reciente).
+    - Si la rentabilidad está en un GRÁFICO, hay que LEER el gráfico.
+      El agente de cada administradora debe especializarse en llegar al
+      dato aunque no venga en texto. Técnicas, en este orden:
+        1) Etiquetas de datos del gráfico que sí son texto en el PDF
+           (pdfplumber words/chars cerca del gráfico).
+        2) Si el gráfico es vectorial: leer las coordenadas de barras/
+           líneas (pdfplumber rects/curves/lines) y convertirlas a valores
+           usando la escala del eje.
+        3) Si es imagen: OCR (pytesseract) sobre el recorte del gráfico.
+        4) Si hay serie de valor cuota: calcular la rentabilidad
+           (1M, 3M, 12M, YTD) a partir de los valores cuota.
+      Cada valor obtenido así debe quedar marcado con su método en "Notas"
+      (ej. "leído de gráfico", "calculado desde valor cuota").
+
+2.2 Ameris - categoría G (Desarrollo Inmobiliario Uno, Megacentro
+    Buenaventura, Renta Industrial II, Rentas y Desarrollos Aconcagua)
+    y también IX, UPC y Renta Residencial.
+    - Ver Aclaraciones\Ameris\1..png.
+    - Ameris SÍ publica la información. La página NO cambia de URL por
+      fondo: hay un menú lateral por categoría (Desarrollo, Deuda, Rentas,
+      ...). Al hacer clic en el fondo, el contenido de la derecha cambia
+      dinámicamente (JavaScript) y muestra acordeones: Actas, Avisos,
+      Documentos del Fondo, Estados Financieros.
+    - El agente debe: abrir la página con Playwright -> clic en la
+      categoría -> clic en el fondo -> esperar que cambie el título de la
+      derecha -> abrir "Documentos del Fondo" -> descargar el documento
+      más reciente que corresponda a ficha/factsheet/informe.
+    - Reclasificar estos fondos: ya no son "G".
+
+2.3 Asset - categoría C (Rentas Residenciales, Desarrollo Chamisero,
+    Outlets Vivo)
+    - Mismo caso que Ameris: la página no cambia de link según la opción;
+      las opciones/pestañas/filtros se cambian en la misma página.
+    - El agente debe interactuar con los selectores de la página
+      (clic / dropdown), esperar la carga y descargar el factsheet
+      correcto y más reciente.
+
+2.4 Credicorp y Frontal Trust (18 fondos) y Larrain Vial Patio Oficinas II
+    - La rentabilidad puede estar en el mismo GRÁFICO del informe.
+      Aplicar las técnicas de la sección 2.1 para leerla.
+    - Si además el texto menciona TIR, múltiplo, dividendos o valor cuota,
+      extraerlos a sus columnas (TIR, Dividend Yield, etc.).
+    - Solo dejar vacío si después de intentar todo no hay dato; en ese
+      caso explicar en "Notas" qué se intentó.
+    - Patio Oficinas II: además reintentar la descarga del documento
+      correcto (hoy es el documento equivocado).
+
+2.5 Sin cambios: Santander (OCR, avísame qué instalar) y BICE (descarga
+    manual; dime qué archivo bajar y dónde dejarlo).
+
+---------------------------------------------------------------------
+3. ACTUALIZACIÓN DINÁMICA (muy importante)
+---------------------------------------------------------------------
+El proceso debe servir cada vez que se ejecute, no solo hoy. Si lo corro
+en diciembre, debe traer el factsheet más reciente disponible a esa fecha.
+
+  - No usar nombres de archivo, meses, fechas ni URLs de PDF fijos en el
+    código. Buscar por palabras clave y elegir el documento MÁS RECIENTE
+    (por fecha en el nombre, en el link o dentro del PDF).
+  - Leer la fecha del reporte desde el propio PDF y guardarla en una
+    columna "Fecha reporte" (distinta de la fecha de descarga).
+  - Si el factsheet más reciente ya fue descargado, no volver a bajarlo.
+  - Guardar histórico: conservar los PDFs anteriores y agregar en el
+    registro una hoja "Histórico" (una fila por fondo y por fecha de
+    reporte) para ver la evolución en el tiempo.
+  - Un solo comando actualiza todo:
+        python master.py            -> descarga, extrae, actualiza Excel,
+                                       JSON y regenera el dashboard.
+  - Indicar en el dashboard la fecha de la última actualización y marcar
+    los fondos cuyo factsheet tenga más de 3 meses de antigüedad.
+
+---------------------------------------------------------------------
+4. DASHBOARD - MÁS DINÁMICO Y COMPLETO
+---------------------------------------------------------------------
+Mantener formato corporativo SITU (grises #2D3334 / #5B6670, acento
+burdeo #96323C, tipografía Roboto). Agregar:
+
+  - Filtros combinables (administradora, tipo de fondo, estado del dato,
+    moneda) que actualicen KPIs, tabla y gráficos al mismo tiempo.
+  - Buscador por nombre de fondo.
+  - Selector de período (1M, 3M, 6M, YTD, 12M, 36M, desde inicio) que
+    cambie los gráficos.
+  - Ranking de fondos por rentabilidad del período seleccionado.
+  - Comparación por administradora (promedio y rango).
+  - Dispersión Dividend Yield vs LTV / Cap Rate.
+  - Evolución histórica por fondo (con los datos de la hoja Histórico).
+  - Ficha de detalle por fondo: todos los indicadores, fecha del
+    reporte, método de obtención del dato, link a la página y al PDF.
+  - Tooltips en los gráficos, tabla ordenable y exportable a Excel/CSV.
+  - Indicador de calidad del dato (OK / leído de gráfico / calculado /
+    parcial / sin dato).
+  - Debe verse bien en pantalla de notebook y en celular.
+
+---------------------------------------------------------------------
+5. ENTREGABLES DE ESTA RONDA
+---------------------------------------------------------------------
+  1. dashboard_fondos.html funcionando sin internet.
+  2. Repositorio GitHub privado con el proyecto (previa confirmación).
+  3. Agentes actualizados: independencia, toesca, ameris, asset,
+     credicorp, frontal_trust, larrainvial.
+  4. master.py con actualización dinámica + hoja Histórico.
+  5. diagnostico_fondos.xlsx actualizado (con las nuevas categorías).
+  6. README.md actualizado.
+
+---------------------------------------------------------------------
+6. ORDEN DE TRABAJO
+---------------------------------------------------------------------
+  Paso 1: Arreglar la carga de gráficos del dashboard (sección 1a/1b).
+  Paso 2: Crear el repositorio GitHub (sección 1c) - mostrarme comandos.
+  Paso 3: Ameris (2.2) - sirve como plantilla para páginas dinámicas.
+  Paso 4: Asset (2.3).
+  Paso 5: Toesca e Independencia (2.1) - lectura de gráficos.
+  Paso 6: Credicorp, Frontal Trust y Patio Oficinas II (2.4).
+  Paso 7: Actualización dinámica + histórico (3).
+  Paso 8: Dashboard completo (4).
+
+Después de cada paso muéstrame un resumen (qué fondos pasaron a OK y
+cuáles siguen pendientes) y espera mi OK antes del siguiente.
+Nunca inventes valores: si un dato no se pudo obtener, déjalo vacío y
+explica el motivo.
+=====================================================================
