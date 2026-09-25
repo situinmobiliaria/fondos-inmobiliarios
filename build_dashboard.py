@@ -17,6 +17,7 @@ BASE = Path(__file__).resolve().parent
 REGISTRO = BASE / "registro_rentabilidad.xlsx"
 DIAGNOSTICO = BASE / "diagnostico_fondos.xlsx"
 OUT = BASE / "dashboard_fondos.html"
+DOCS_DIR = BASE / "docs"
 CHARTJS_VENDOR = BASE / "vendor" / "chart.umd.min.js"
 
 # Arreglo cosmetico de nombres con mojibake heredado del listado maestro
@@ -169,7 +170,15 @@ def main():
     html = TEMPLATE.replace("__DATA_JSON__", json.dumps(data, ensure_ascii=False, allow_nan=False))
     html = html.replace("__CHARTJS_INLINE__", chartjs_code)
     OUT.write_text(html, encoding="utf-8")
+
+    # Copia identica en docs/index.html -- es la carpeta que se configura como
+    # fuente de GitHub Pages para publicar el dashboard con URL publica
+    # (repo.situinmobiliaria.github.io/fondos-inmobiliarios/), igual que Panel-TECSERVICE.
+    DOCS_DIR.mkdir(exist_ok=True)
+    (DOCS_DIR / "index.html").write_text(html, encoding="utf-8")
+
     print(f"OK -> {OUT} ({n_fondos} fondos, {n_admin} administradoras, {pct_ok}% OK)")
+    print(f"OK -> {DOCS_DIR / 'index.html'} (copia para GitHub Pages)")
 
 
 TEMPLATE = r"""<!doctype html>
