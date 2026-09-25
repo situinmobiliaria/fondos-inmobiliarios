@@ -1,8 +1,8 @@
 {
-  "generado": "2026-09-25T14:36:04",
+  "generado": "2026-09-25T15:12:15",
   "fondos": [
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Independencia",
       "Fondo": "CEFIN Rentas",
       "Archivo": "20260825_FIX_FichaFECU.pdf",
@@ -28,7 +28,7 @@
       "Notas": "Rentabilidad 12M / Dividend Yield / TIR son sobre valor libro, no bursatil. LTV leido de las etiquetas de dato del grafico 'Loan to Value Total (LTV)' (por posicion, no por orden de lectura del texto). Leverage esta en un grafico cuya unica linea es 'Tasa promedio deuda financiera' (no Leverage en si) -> se deja vacio para no cargar el dato equivocado."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "BTG Pactual",
       "Fondo": "Renta Comercial",
       "Archivo": "20260508_Renta Comercial.pdf",
@@ -54,7 +54,7 @@
       "Notas": "Serie A (fondo tambien reporta Serie I en el PDF)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "BICE",
       "Fondo": "Rentas Inmobiliarias",
       "Archivo": "20260508_Rentas Inmobiliarias.pdf",
@@ -80,7 +80,7 @@
       "Notas": "El archivo actual es el Reglamento Interno del fondo, no la ficha. Descarga manual requerida desde https://banco.bice.cl/inversiones/fondos-de-inversion/bice-rentas-inmobiliarias-fondo-de-inversion y guardar en 'Fondos Descargados/BICE/Rentas Inmobiliarias/'."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Santander",
       "Fondo": "Rentas Residenciales",
       "Archivo": "20260508_Rentas Residenciales.pdf",
@@ -106,7 +106,7 @@
       "Notas": "pdfplumber no pudo extraer ningun texto del documento. Para OCR falta instalar: pip install pytesseract pdf2image, + Tesseract-OCR y poppler en el PATH. Alternativa: buscar una version nativa (no escaneada) en santanderassetmanagement.cl."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Princiapl",
       "Fondo": "Renta Residencial",
       "Archivo": "20260508_Renta Residencial.pdf",
@@ -132,7 +132,7 @@
       "Notas": "Serie I (primera serie reportada en la tabla del fondo)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Larrain Vial",
       "Fondo": "Patio Oficinas I",
       "Archivo": "20260507_Patio Oficinas I.pdf",
@@ -158,7 +158,7 @@
       "Notas": "Dividend Yield sobre valor bolsa; ver PDF para Dividend Yield sobre NAV"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Larrain Vial",
       "Fondo": "Patio Oficinas II",
       "Archivo": "20260507_Patio Oficinas II.pdf",
@@ -184,7 +184,7 @@
       "Notas": "Reintentar descarga desde la pagina del fondo en larrainvial.com; este PDF es una carta sobre la auditoria forense de Grupo Patio/Factop."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Larrain Vial",
       "Fondo": "Renta Inmobiliaria I",
       "Archivo": "20260507_Renta Inmobiliaria I.pdf",
@@ -210,7 +210,7 @@
       "Notas": "Dividend Yield sobre valor bolsa; ver PDF para Dividend Yield sobre NAV"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Larrain Vial",
       "Fondo": "Patio Stripcenters II",
       "Archivo": "20260507_Patio Stripcenters II.pdf",
@@ -236,7 +236,7 @@
       "Notas": "Dividend Yield sobre valor bolsa; ver PDF para Dividend Yield sobre NAV"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Toesca",
       "Fondo": "Net Lease Chile II",
       "Archivo": "20260508_Net Lease Chile II.pdf",
@@ -262,7 +262,7 @@
       "Notas": null
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Toesca",
       "Fondo": "Renta Residencial",
       "Archivo": "20260508_Renta Residencial.pdf",
@@ -288,7 +288,7 @@
       "Notas": "Serie principal del fondo (puede haber otras series con valores distintos)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Toesca",
       "Fondo": "Rentas Inmobiliarias Apoquindo",
       "Archivo": "20260508_Rentas Inmobiliarias Apoquindo.pdf",
@@ -314,7 +314,7 @@
       "Notas": "Serie principal del fondo (puede haber otras series con valores distintos)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Toesca",
       "Fondo": "Rentas Inmobiliarias",
       "Archivo": "20260508_Rentas Inmobiliarias.pdf",
@@ -340,7 +340,7 @@
       "Notas": "Serie principal del fondo (puede haber otras series con valores distintos)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Toesca",
       "Fondo": "Rentas Inmobiliarias Pt Fondo de Inversión",
       "Archivo": "20260508_Rentas Inmobiliarias Pt Fondo de Inversión.pdf",
@@ -366,7 +366,7 @@
       "Notas": "Serie principal del fondo (puede haber otras series con valores distintos)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Inversiones Security",
       "Fondo": "Rentas Inmobiliarias II",
       "Archivo": "20260825_FIX_FolletoInformativo.pdf",
@@ -392,7 +392,7 @@
       "Notas": "Folleto Informativo tipo KIID: trae 'Mejores y Peores Rentabilidades Ultimos 5 anos' como grafico de barras sin etiquetas de periodo en el texto extraido."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Renta Industrial II",
       "Archivo": "20260825_FIX_EEFF.pdf",
@@ -418,7 +418,7 @@
       "Notas": "Se descargaron los Estados Financieros como mejor alternativa disponible; no contienen rentabilidad periodica lista para usar."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Renta Reisdencial",
       "Archivo": "20260825_FIX_factsheet.pdf",
@@ -444,7 +444,7 @@
       "Notas": "Informe mensual exportado de Power BI: solo trae graficos (valor cuota, dividendos), sin tabla numerica de rentabilidad."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Rentas y Desarrollos Aconcagua",
       "Archivo": "20260825_FIX_EEFF.pdf",
@@ -470,7 +470,7 @@
       "Notas": "Se descargaron los Estados Financieros como mejor alternativa disponible; no contienen rentabilidad periodica lista para usar."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Desarrollo Inmobiliario IX",
       "Archivo": "20260825_FIX_factsheet.pdf",
@@ -496,7 +496,7 @@
       "Notas": "Informe mensual exportado de Power BI: solo trae graficos (valor cuota, dividendos), sin tabla numerica de rentabilidad."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "UPC Desarrollo Inmobiliario",
       "Archivo": "20260825_FIX_factsheet.pdf",
@@ -522,7 +522,7 @@
       "Notas": "Informe mensual exportado de Power BI: solo trae graficos (valor cuota, dividendos), sin tabla numerica de rentabilidad."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Desarrollo Inmobiliario Uno",
       "Archivo": "20260825_FIX_EEFF.pdf",
@@ -548,7 +548,7 @@
       "Notas": "Se descargaron los Estados Financieros como mejor alternativa disponible; no contienen rentabilidad periodica lista para usar."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Ameris",
       "Fondo": "Megacentro Buenaventura",
       "Archivo": "20260825_FIX_EEFF.pdf",
@@ -574,7 +574,7 @@
       "Notas": "Se descargaron los Estados Financieros como mejor alternativa disponible; no contienen rentabilidad periodica lista para usar."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Fundamenta Plaza Egaña",
       "Archivo": "20260508_Fundamenta Plaza Egaña.pdf",
@@ -600,7 +600,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "San Bernardo",
       "Archivo": "20260508_San Bernardo.pdf",
@@ -626,7 +626,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Desarrollos Industriales I",
       "Archivo": "20260508_Desarrollos Industriales I.pdf",
@@ -652,7 +652,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Desarrollo Inmobiliario XIII",
       "Archivo": "20260508_Desarrollo Inmobiliario XIII.pdf",
@@ -678,7 +678,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica. El PDF menciona una formula contractual de rentabilidad objetivo (UF+8,0% anual, Distribucion Extraordinaria), no un resultado medido; no se carga en ninguna columna."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Desarrollo Inmobiliario XV",
       "Archivo": "20260508_Desarrollo Inmobiliario XV.pdf",
@@ -704,7 +704,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Desarrollo Inmobiliario XVI",
       "Archivo": "20260508_Desarrollo Inmobiliario XVI.pdf",
@@ -730,7 +730,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Frontal Trust",
       "Fondo": "Desarrollo Inmobiliario XX",
       "Archivo": "20260508_Desarrollo Inmobiliario XX.pdf",
@@ -756,7 +756,7 @@
       "Notas": "Informe General de fondo de desarrollo: reporta avance de proyectos por unidad (ventas/escrituras/%construccion), no una tabla de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Zurich",
       "Fondo": "Renta Residencial",
       "Archivo": "20260825_FIX_FolletoSerieA.pdf",
@@ -782,7 +782,7 @@
       "Notas": "Folleto Informativo tipo KIID (LVA Indices): 'Mejores y Peores Rentabilidades Ultimos 5 anos' como grafico de barras sin etiquetas de periodo en el texto extraido."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Banchile",
       "Fondo": "Desarrollo y Rentas Residenciales",
       "Archivo": "20260508_Desarrollo y Rentas Residenciales.pdf",
@@ -808,7 +808,7 @@
       "Notas": "Rentabilidad en UF (el PDF tambien reporta la misma tabla en CLP)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Banchile",
       "Fondo": "Inmobiliario X",
       "Archivo": "20260508_Inmobiliario X.pdf",
@@ -834,7 +834,7 @@
       "Notas": "Este fondo solo trae el grafico de evolucion de valor cuota, sin la tabla numerica 'Rentabilidad del Fondo'."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Banchile",
       "Fondo": "Inmobiliario XI",
       "Archivo": "20260508_Inmobiliario XI.pdf",
@@ -860,7 +860,7 @@
       "Notas": "Rentabilidad en UF (el PDF tambien reporta la misma tabla en CLP)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Banchile",
       "Fondo": "Inmobiliario IX",
       "Archivo": "20260508_Inmobiliario IX.pdf",
@@ -886,7 +886,7 @@
       "Notas": "Rentabilidad en UF (el PDF tambien reporta la misma tabla en CLP)"
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Renta Residencial I",
       "Archivo": "20260508_Renta Residencial I.pdf",
@@ -912,7 +912,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Aconcagua II",
       "Archivo": "20260508_Aconcagua II.pdf",
@@ -938,7 +938,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica. Rentabilidad 'Desde Inicio' leida del texto libre del comentario (UF), no de una tabla."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Capital Raíces",
       "Archivo": "20260825_FIX_FactSheet.pdf",
@@ -964,7 +964,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Renta Residencial II",
       "Archivo": "20260508_Renta Residencial II.pdf",
@@ -975,7 +975,7 @@
       "Rent. 12M (1A)": null,
       "Rent. 24M (2A)": null,
       "Rent. 36M (3A)": null,
-      "Rent. Desde Inicio": null,
+      "Rent. Desde Inicio": "24,21",
       "Dividend Yield": null,
       "TIR": null,
       "Cap Rate": null,
@@ -986,11 +986,11 @@
       "Plazo/Duracion": "10 años",
       "N Activos": null,
       "Fecha Reporte": null,
-      "Estado": "OK - documento correcto, pero rentabilidad en formato grafico (no extraible por texto)",
-      "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
+      "Estado": "Rentabilidad calculada desde Valor Cuota (Inicio vs Actual)",
+      "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica. Calculado desde Valor Cuota: 27.280,54 el 29-08-2018 -> 33.885,00 el 30-09-2025. Es variacion de PRECIO de la cuota solamente (no incluye dividendos repartidos en el camino) y no esta anualizada -- no es directamente comparable con 'Desde Inicio' de otras administradoras, que si suele incluir dividendos."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Plaza Egaña",
       "Archivo": "20260508_Plaza Egaña.pdf",
@@ -1016,7 +1016,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Aconcagua III",
       "Archivo": "20260508_Aconcagua III.pdf",
@@ -1042,7 +1042,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Renta Inmobiliaria II",
       "Archivo": "20260508_Renta Inmobiliaria II.pdf",
@@ -1068,7 +1068,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Retorno Preferente Maestra I",
       "Archivo": "20260508_Retorno Preferente Maestra I.pdf",
@@ -1094,7 +1094,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica. El PDF menciona una rentabilidad OBJETIVO (no realizada) de UF+6,4% para el aportante; no se carga en ninguna columna para no confundirla con un resultado medido."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Renta Industrial I",
       "Archivo": "20260508_Renta Industrial I.pdf",
@@ -1120,7 +1120,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Renta Residencial III",
       "Archivo": "20260508_Renta Residencial III.pdf",
@@ -1131,7 +1131,7 @@
       "Rent. 12M (1A)": null,
       "Rent. 24M (2A)": null,
       "Rent. 36M (3A)": null,
-      "Rent. Desde Inicio": null,
+      "Rent. Desde Inicio": "17,20",
       "Dividend Yield": null,
       "TIR": null,
       "Cap Rate": null,
@@ -1142,11 +1142,11 @@
       "Plazo/Duracion": "7 años",
       "N Activos": null,
       "Fecha Reporte": null,
-      "Estado": "OK - documento correcto, pero rentabilidad en formato grafico (no extraible por texto)",
-      "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
+      "Estado": "Rentabilidad calculada desde Valor Cuota (Inicio vs Actual)",
+      "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica. Calculado desde Valor Cuota: 33.401,71 el 10-08-2022 -> 39.147,70 el 30-09-2025. Es variacion de PRECIO de la cuota solamente (no incluye dividendos repartidos en el camino) y no esta anualizada -- no es directamente comparable con 'Desde Inicio' de otras administradoras, que si suele incluir dividendos."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Credicorp",
       "Fondo": "Preferente Maestra II",
       "Archivo": "20260825_FIX_FactSheet.pdf",
@@ -1172,7 +1172,7 @@
       "Notas": "Reporte de fondo de desarrollo/en liquidacion: no trae tabla estandar de rentabilidad periodica."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Asset",
       "Fondo": "Asset  Rentas Residenciales",
       "Archivo": "20260508_Asset  Rentas Residenciales.pdf",
@@ -1198,7 +1198,7 @@
       "Notas": "descargar() no encontro el link correcto dentro de la seccion del fondo; revisar selectores en agentes/asset.py."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Asset",
       "Fondo": "Asset Outlets Vivo",
       "Archivo": "20260508_Asset Outlets Vivo.pdf",
@@ -1224,7 +1224,7 @@
       "Notas": "descargar() no encontro el link correcto dentro de la seccion del fondo; revisar selectores en agentes/asset.py."
     },
     {
-      "Fecha actualizacion": "2026-09-25 14:36",
+      "Fecha actualizacion": "2026-09-25 15:12",
       "Administradora": "Asset",
       "Fondo": "Asset Desarrollo Chamisero",
       "Archivo": "20260508_Asset Desarrollo Chamisero.pdf",
