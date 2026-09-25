@@ -25,6 +25,18 @@ descargar() corrige esto:
 
 No se pudo probar en vivo (sin internet en el entorno de desarrollo) -- hay
 que validarla corriendo `python -m agentes.asset` con conexion real.
+
+Extraccion (confirmada con una captura de pantalla del Folleto Informativo
+real que compartio el usuario): el documento SI trae, en texto (no grafico),
+"Valor Cuota Contable al Inicio (fecha) $X" y "Valor Cuota Contable Actual
+(fecha) $X" -- con eso se calcula la rentabilidad acumulada desde el inicio
+(igual tecnica que agentes/credicorp.py). Tambien trae Moneda del Fondo y
+Plazo del Fondo en texto limpio. El regex se valido contra un texto de
+prueba armado a partir de la captura (ver test manual en el historial), pero
+falta confirmarlo contra el PDF real extraido por pdfplumber, que puede
+mezclar el orden por el layout de 2 columnas como pasa en otras
+administradoras -- correr `python -m agentes.asset` una vez descargado el
+documento correcto y avisar si no matchea.
 """
 from __future__ import annotations
 
@@ -34,10 +46,28 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from agentes.base import AgenteBase, registro_vacio, sanitize
+from agentes.base import AgenteBase, registro_vacio, sanitize, extraer_metadatos_comunes
 
 BLACKLIST_DOC_ASSET = ["estados financieros", "estado financiero", "informe de auditor",
                        "auditor", "acta", "asamblea", "hecho esencial"]
+
+# Patrones del "Folleto Informativo" real (confirmado por el usuario con una
+# captura de pantalla del documento correcto de Asset Rentas Residenciales --
+# no se pudo descargar ese PDF en este entorno para probar el regex contra el
+# texto real extraido por pdfplumber, asi que esto usa ventanas generosas
+# tolerantes a que el layout de 2 columnas mezcle el orden como en otras
+# administradoras; hay que validarlo con `python -m agentes.asset` una vez
+# descargado el documento correcto):
+#   Valor Cuota Contable al Inicio (22 noviembre 2013)   $23.230
+#   Valor Cuota Contable Actual (31 marzo 2026)          $68.132
+_PATRON_CUOTA_INICIO = re.compile(
+    r"Valor Cuota Contable al Inicio\s*\(([^)]+)\)[^\$\d]{0,20}\$?\s*([\d.,]+)")
+_PATRON_CUOTA_ACTUAL = re.compile(
+    r"Valor Cuota Contable Actual\s*\(([^)]+)\)[^\$\d]{0,20}\$?\s*([\d.,]+)")
+
+
+def _num_cl(s: str) -> float:
+    return float(s.replace(".", "").replace(",", "."))
 
 
 def _palabras_clave(nombre: str) -> list[str]:
@@ -165,9 +195,31 @@ class AgenteAsset(AgenteBase):
             return r
 
         texto = self._texto_pdf(pdf_path)
+        r.update(extraer_metadatos_comunes(texto))
+
+        m_ini = _PATRON_CUOTA_INICIO.search(texto)
+        m_act = _PATRON_CUOTA_ACTUAL.search(texto)
+        if m_ini and m_act:
+            try:
+                v_ini, v_act = _num_cl(m_ini.group(2)), _num_cl(m_act.group(2))
+                if v_ini > 0:
+                    pct = (v_act / v_ini - 1) * 100
+                    r["Rent. Desde Inicio"] = f"{pct:.2f}".replace(".", ",")
+                    r["estado_categoria"] = "F"
+                    r["estado"] = "Rentabilidad calculada desde Valor Cuota Contable (Inicio vs Actual)"
+                    r["notas"] = (f"Calculado desde Valor Cuota Contable: {m_ini.group(2)} ({m_ini.group(1)}) -> "
+                                  f"{m_act.group(2)} ({m_act.group(1)}). Variacion de precio de la cuota, no "
+                                  f"incluye dividendos ni esta anualizada.")
+                    return r
+            except ValueError:
+                pass
+
         r["estado_categoria"] = "F" if texto.strip() else "E"
-        r["estado"] = "Documento descargado, extraccion de rentabilidad aun no implementada para el Folleto Informativo de Asset"
-        r["notas"] = "Falta revisar el layout real del Folleto Informativo para escribir el regex de extraccion (igual que se hizo con Toesca/Larrain Vial)."
+        r["estado"] = "Documento descargado, no se encontraron las etiquetas 'Valor Cuota Contable al Inicio/Actual' esperadas"
+        r["notas"] = ("Se esperaba el patron confirmado por captura de pantalla del Folleto Informativo "
+                      "('Valor Cuota Contable al Inicio (fecha) $X' / '...Actual (fecha) $X'); no se encontro "
+                      "en este PDF -- puede que el layout de 2 columnas haya mezclado el texto (ver notas de "
+                      "otras administradoras con el mismo problema) o que este no sea el Folleto Informativo.")
         return r
 
 
