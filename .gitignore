@@ -12,5 +12,8 @@ Lamina Tipo SITU.pptx
 *.bak*
 _scratch/
 
+# Archivos de bloqueo temporales de Office (se crean mientras el archivo esta abierto)
+~$*
+
 # Fondos Descargados/ SI se incluye (decision explicita del usuario, Ronda 2):
 # el repo debe servir como acceso a los factsheets, asi que los PDFs se suben.
