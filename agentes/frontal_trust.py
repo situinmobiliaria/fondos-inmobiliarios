@@ -156,16 +156,32 @@ class AgenteFrontalTrust(AgenteBase):
     def extraer(self, pdf_path: Path) -> dict:
         r = registro_vacio()
         texto = self._texto_pdf(pdf_path)
+        texto_plano = re.sub(r"\s+", " ", texto)
 
         m = re.search(r"Informe General (\w+) (\d{4})", texto)
         if m:
             r["fecha_reporte"] = f"{m.group(2)}-{m.group(1)[:3]}"
 
         r.update(extraer_metadatos_comunes(texto))
+
+        # Ronda 2 (2.4): se intenta encontrar menciones de rentabilidad/TIR en
+        # el texto libre. En los 7 fondos revisados, las unicas menciones son
+        # formulas contractuales de la "Distribucion Extraordinaria por
+        # Rentabilidad" (ej. "rentabilidad equivalente a UF+8,0% anual"), que
+        # son un objetivo/formula, no un resultado medido -- se documentan en
+        # Notas pero NO se cargan en una columna numerica (evita mezclar
+        # objetivo con realizado, ver mismo criterio en agentes/credicorp.py).
+        m_formula = re.search(r"rentabilidad equivalente[^%\d]{0,20}?(-?\d+[.,]\d+)\s*%", texto_plano, re.IGNORECASE)
+        nota_formula = ""
+        if m_formula:
+            nota_formula = (f" El PDF menciona una formula contractual de rentabilidad objetivo "
+                            f"(UF+{m_formula.group(1).replace('.', ',')}% anual, Distribucion Extraordinaria), "
+                            f"no un resultado medido; no se carga en ninguna columna.")
+
         r["estado_categoria"] = "E"
         r["estado"] = "OK - documento correcto, pero rentabilidad en formato grafico (no extraible por texto)"
         r["notas"] = ("Informe General de fondo de desarrollo: reporta avance de proyectos por unidad "
-                      "(ventas/escrituras/%construccion), no una tabla de rentabilidad periodica.")
+                      "(ventas/escrituras/%construccion), no una tabla de rentabilidad periodica." + nota_formula)
         return r
 
 

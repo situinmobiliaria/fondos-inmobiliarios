@@ -61,6 +61,7 @@ class AgenteBanchile(AgenteBase):
         insp = self.inspeccionar(pdf_path)
         texto = self._texto_pdf(pdf_path)
         r.update(extraer_metadatos_comunes(texto))  # rescata N Proyectos Vigentes como n_activos
+        r["fecha_reporte"] = insp.get("fecha_reporte_texto")
 
         if not insp.get("tiene_tabla_rentabilidad"):
             r["estado_categoria"] = "E"

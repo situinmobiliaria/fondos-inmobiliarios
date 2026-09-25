@@ -79,6 +79,8 @@ class AgenteLarrainVial(AgenteBase):
         lev = self.buscar_num(texto, "Leverage", sufijo="", window=15)
         r["Leverage"] = lev
 
+        r["fecha_reporte"] = insp.get("fecha_reporte_texto")
+
         # Los 4 fondos reportan sus valores en "$" (CLP); no hay un campo
         # explicito de "Moneda del Fondo" en este layout.
         r["moneda"] = "CLP"

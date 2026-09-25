@@ -9,6 +9,7 @@ Uso:
 """
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +19,32 @@ REGISTRO = BASE / "registro_rentabilidad.xlsx"
 DIAGNOSTICO = BASE / "diagnostico_fondos.xlsx"
 OUT = BASE / "dashboard_fondos.html"
 DOCS_DIR = BASE / "docs"
+
+MESES_ES = {
+    "ene": 1, "enero": 1, "feb": 2, "febrero": 2, "mar": 3, "marzo": 3,
+    "abr": 4, "abril": 4, "may": 5, "mayo": 5, "jun": 6, "junio": 6,
+    "jul": 7, "julio": 7, "ago": 8, "agosto": 8, "sep": 9, "sept": 9, "septiembre": 9,
+    "oct": 10, "octubre": 10, "nov": 11, "noviembre": 11, "dic": 12, "diciembre": 12,
+}
+
+
+def parse_fecha_reporte(s):
+    """Intenta interpretar el texto libre que cada agente dejo en 'fecha_reporte'
+    (formatos: 'YYYY-MM', 'YYYY-Mes', 'Mes YYYY', '31 deMarzo de YYYY') y
+    devuelve un date (dia 1) o None si no se pudo. Nunca lanza excepcion."""
+    if not s or not isinstance(s, str):
+        return None
+    s = s.strip()
+    m = re.match(r"^(\d{4})-(\d{1,2})$", s)
+    if m:
+        return datetime(int(m.group(1)), int(m.group(2)), 1).date()
+    m = re.match(r"^(\d{4})-([A-Za-zñÑ]+)$", s)
+    if m and m.group(2).lower() in MESES_ES:
+        return datetime(int(m.group(1)), MESES_ES[m.group(2).lower()], 1).date()
+    m = re.search(r"([A-Za-zñÑ]+)\.?\s+(?:de\s*)?(\d{4})", s, re.IGNORECASE)
+    if m and m.group(1).lower() in MESES_ES:
+        return datetime(int(m.group(2)), MESES_ES[m.group(1).lower()], 1).date()
+    return None
 CHARTJS_VENDOR = BASE / "vendor" / "chart.umd.min.js"
 
 # Arreglo cosmetico de nombres con mojibake heredado del listado maestro
@@ -84,9 +111,29 @@ def calidad(categoria: str) -> str:
 
 
 def main():
+    HOY = datetime.now().date()
     reg = pd.read_excel(REGISTRO)
     reg.columns = [c.replace("�", "a") if "actualiza" in c.lower() else c for c in reg.columns]
     diag = pd.read_excel(DIAGNOSTICO, sheet_name="Diagnostico")
+
+    historico = []
+    try:
+        hist = pd.read_excel(REGISTRO, sheet_name="Historico")
+        hist.columns = [c.replace("�", "a") if "actualiza" in c.lower() else c for c in hist.columns]
+        for _, row in hist.iterrows():
+            fr = clean_str(row.get("Fecha Reporte")) or None
+            fr_dt = parse_fecha_reporte(fr)
+            historico.append({
+                "administradora": fix_nombre(row.get("Administradora")),
+                "fondo": fix_nombre(row.get("Fondo")),
+                "fecha_reporte": fr,
+                "fecha_reporte_orden": fr_dt.isoformat() if fr_dt else None,
+                "Rent. 12M (1A)": parse_num(row.get("Rent. 12M (1A)")),
+                "Dividend Yield": parse_num(row.get("Dividend Yield")),
+                "LTV": parse_num(row.get("LTV")),
+            })
+    except Exception:
+        pass  # todavia no existe la hoja Historico (primera corrida de master.py)
 
     fondos = []
     for _, row in reg.iterrows():
@@ -105,6 +152,10 @@ def main():
                     "Rentabilidad Directa", "Leverage"]:
             campos_num[col] = parse_num(row.get(col))
 
+        fecha_reporte_raw = clean_str(row.get("Fecha Reporte")) or None
+        fecha_reporte_dt = parse_fecha_reporte(fecha_reporte_raw)
+        antiguedad_dias = (HOY - fecha_reporte_dt).days if fecha_reporte_dt else None
+
         fondos.append({
             "administradora": fix_nombre(adm),
             "fondo": fondo,
@@ -118,6 +169,8 @@ def main():
             "moneda": clean_str(row.get("Moneda")) or None,
             "plazo": clean_str(row.get("Plazo/Duracion")) or None,
             "n_activos": (None if pd.isna(row.get("N Activos")) else int(row.get("N Activos"))),
+            "fecha_reporte": fecha_reporte_raw,
+            "desactualizado": (antiguedad_dias is not None and antiguedad_dias > 92),
             **{k: v for k, v in campos_num.items()},
         })
 
@@ -151,12 +204,14 @@ def main():
         "dy_prom": prom(dy),
         "n_activos_total": sum(n_act) if n_act else None,
         "n_activos_fondos": len(n_act),
+        "n_desactualizados": sum(1 for f in fondos if f["desactualizado"]),
     }
 
     data = {
         "generado": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
         "kpis": kpis,
         "fondos": fondos,
+        "historico": historico,
     }
 
     if not CHARTJS_VENDOR.exists():
@@ -285,6 +340,7 @@ tbody tr:hover{background:var(--gris-claro);cursor:pointer;}
 .pill-ok{background:#E4E7E7;color:var(--gris-oscuro);}
 .pill-parcial{background:var(--burdeo3);color:var(--burdeo4);}
 .pill-sindato{background:var(--gris-claro2);color:var(--gris-medio);}
+.pill-stale{background:#fff;color:var(--burdeo);border:1px solid var(--burdeo3);}
 
 .modal-overlay{
   position:fixed;inset:0;background:rgba(45,51,52,.55);display:none;
@@ -328,8 +384,20 @@ footer{color:var(--gris-medio);font-size:.75rem;text-align:center;padding-top:20
   <h2>Rentabilidad y calidad de los datos</h2>
   <div class="charts-grid">
     <div class="chart-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <h3 class="chart-subtitulo" style="margin:0;">Ranking por período</h3>
+        <select id="f-periodo" style="border:1px solid var(--borde);border-radius:5px;padding:4px 8px;font-size:.78rem;font-family:inherit;">
+          <option value="Rent. 1M">1M</option>
+          <option value="Rent. 3M">3M</option>
+          <option value="Rent. 6M">6M</option>
+          <option value="Rent. YTD">YTD</option>
+          <option value="Rent. 12M (1A)" selected>12M</option>
+          <option value="Rent. 36M (3A)">36M</option>
+          <option value="Rent. Desde Inicio">Desde Inicio</option>
+        </select>
+      </div>
       <div class="chart-canvas-wrap alto"><canvas id="chartBarras12m"></canvas></div>
-      <p class="chart-nota">Solo fondos con Rentabilidad 12M disponible.</p>
+      <p class="chart-nota" id="chartBarras12m-nota">Solo fondos con el período elegido disponible.</p>
     </div>
     <div class="chart-box">
       <div class="chart-canvas-wrap bajo"><canvas id="chartPromAdmin"></canvas></div>
@@ -443,6 +511,7 @@ const kpiDefs = [
   [k.rent12_mediana!==null ? fmtPct(k.rent12_mediana) : '—', 'Rent. 12M mediana'],
   [k.dy_prom!==null ? fmtPct(k.dy_prom) : '—', 'Dividend Yield promedio'],
   [k.n_activos_total!==null ? k.n_activos_total : '—', `N° Activos (suma, ${k.n_activos_fondos} fondos)`],
+  [k.n_desactualizados, 'Factsheets con +3 meses de antigüedad'],
 ];
 document.getElementById('kpis').innerHTML = kpiDefs.map(([v,l])=>
   `<div class="kpi"><div class="val">${v}</div><div class="lbl">${l}</div></div>`).join('');
@@ -495,7 +564,7 @@ function renderTabla(rows){
       <td>${f.moneda || '—'}</td>
       <td class="num">${f.n_activos ?? '—'}</td>
       ${cols.map(c=>`<td class="num ${pctClass(f[c])}">${fmtPct(f[c])}</td>`).join('')}
-      <td><span class="pill ${pillClass(f.calidad)}">${f.calidad}</span></td>
+      <td><span class="pill ${pillClass(f.calidad)}">${f.calidad}</span>${f.desactualizado ? ' <span class="pill pill-stale" title="Factsheet con mas de 3 meses de antiguedad">⏱ antiguo</span>' : ''}</td>
     </tr>
   `).join('');
   [...document.querySelectorAll('#tabla-body tr')].forEach(tr=>{
@@ -547,14 +616,21 @@ function abrirDetalle(f){
     ['Moneda', f.moneda || '—'],
     ['Plazo / Duración', f.plazo || '—'],
     ['N° Activos', f.n_activos ?? '—'],
+    ['Fecha del reporte', f.fecha_reporte || '—'],
   ].map(([l,v])=>`<div class="item"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+
+  const histFondo = (DATA.historico||[]).filter(h=>h.administradora===f.administradora && h.fondo===f.fondo)
+    .filter(h=>h.fecha_reporte_orden).sort((a,b)=>a.fecha_reporte_orden.localeCompare(b.fecha_reporte_orden));
+  const tieneHistorico = histFondo.length >= 2;
 
   document.getElementById('modal-content').innerHTML = `
     <button class="modal-close" onclick="cerrarDetalle()">&times;</button>
     <h3>${f.fondo}</h3>
     <div class="sub">${f.administradora} · ${f.tipo}</div>
+    ${f.desactualizado ? '<div class="estado" style="border-left:3px solid var(--burdeo);">⏱ El factsheet de este fondo tiene más de 3 meses de antigüedad.</div>' : ''}
     <div class="modal-grid">${ficha}</div>
     <div class="modal-grid">${items}</div>
+    ${tieneHistorico ? '<div class="chart-canvas-wrap bajo" style="margin-bottom:14px;"><canvas id="chartHistorico"></canvas></div>' : ''}
     <div class="estado"><strong>Estado:</strong> ${f.estado || '—'}${f.notas ? '<br><br>' + f.notas : ''}</div>
     <div class="links">
       ${f.link ? `<a href="${f.link}" target="_blank" rel="noopener">Ver página del fondo →</a>` : ''}
@@ -562,6 +638,24 @@ function abrirDetalle(f){
     </div>
   `;
   document.getElementById('modal-overlay').classList.add('open');
+
+  if(tieneHistorico && typeof Chart !== 'undefined'){
+    new Chart(document.getElementById('chartHistorico'), {
+      type:'line',
+      data:{
+        labels: histFondo.map(h=>h.fecha_reporte),
+        datasets:[{
+          label:'Rent. 12M (%)', data: histFondo.map(h=>h['Rent. 12M (1A)']),
+          borderColor:'#96323C', backgroundColor:'#96323C', tension:0.2, spanGaps:true,
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, title:{display:true, text:'Evolución Rentabilidad 12M', color:'#2D3334', font:{size:12}}},
+        scales:{ y:{ticks:{callback:v=>v+'%'}, grid:{color:'#E6E7E8'}}, x:{grid:{display:false}, ticks:{font:{size:9}}} }
+      }
+    });
+  }
 }
 function cerrarDetalle(){ document.getElementById('modal-overlay').classList.remove('open'); }
 document.getElementById('modal-overlay').addEventListener('click', e=>{
@@ -651,31 +745,40 @@ const CHART_BASE = {
 try {
 if (typeof Chart === 'undefined') throw new Error('Chart.js no disponible (el bundle incrustado no se cargo correctamente)');
 
-const conRent12 = fondos.filter(f=>f['Rent. 12M (1A)']!==null && f['Rent. 12M (1A)']!==undefined)
-  .sort((a,b)=>b['Rent. 12M (1A)']-a['Rent. 12M (1A)']);
+const PERIODO_LABEL = {'Rent. 1M':'1M','Rent. 3M':'3M','Rent. 6M':'6M','Rent. YTD':'YTD',
+  'Rent. 12M (1A)':'12M','Rent. 36M (3A)':'36M','Rent. Desde Inicio':'Desde Inicio'};
+let chartBarras = null;
 
-new Chart(document.getElementById('chartBarras12m'), {
-  type:'bar',
-  data:{
-    labels: conRent12.map(f=>f.fondo),
-    datasets:[{
-      label:'Rentabilidad 12M (%)',
-      data: conRent12.map(f=>f['Rent. 12M (1A)']),
-      backgroundColor: conRent12.map(f=> f['Rent. 12M (1A)']<0 ? '#96323C' : '#2D3334'),
-      borderRadius:2,
-      barThickness: 10,
-    }]
-  },
-  options:{
-    ...CHART_BASE,
-    indexAxis:'y',
-    plugins:{legend:{display:false}, title:{display:true, text:'Rentabilidad 12M por fondo', color:'#2D3334', font:{size:13}}},
-    scales:{
-      x:{ticks:{callback:v=>v+'%'}, grid:{color:'#E6E7E8'}},
-      y:{ticks:{font:{size:10}}, grid:{display:false}}
+function renderChartBarras(periodo){
+  const con = fondos.filter(f=>f[periodo]!==null && f[periodo]!==undefined).sort((a,b)=>b[periodo]-a[periodo]);
+  document.getElementById('chartBarras12m-nota').textContent =
+    `${con.length} fondo(s) con ${PERIODO_LABEL[periodo]} disponible.`;
+  if(chartBarras) chartBarras.destroy();
+  chartBarras = new Chart(document.getElementById('chartBarras12m'), {
+    type:'bar',
+    data:{
+      labels: con.map(f=>f.fondo),
+      datasets:[{
+        label:`Rentabilidad ${PERIODO_LABEL[periodo]} (%)`,
+        data: con.map(f=>f[periodo]),
+        backgroundColor: con.map(f=> f[periodo]<0 ? '#96323C' : '#2D3334'),
+        borderRadius:2,
+        barThickness: 10,
+      }]
+    },
+    options:{
+      ...CHART_BASE,
+      indexAxis:'y',
+      plugins:{legend:{display:false}, title:{display:true, text:`Rentabilidad ${PERIODO_LABEL[periodo]} por fondo`, color:'#2D3334', font:{size:13}}},
+      scales:{
+        x:{ticks:{callback:v=>v+'%'}, grid:{color:'#E6E7E8'}},
+        y:{ticks:{font:{size:10}}, grid:{display:false}}
+      }
     }
-  }
-});
+  });
+}
+renderChartBarras('Rent. 12M (1A)');
+document.getElementById('f-periodo').addEventListener('change', e=> renderChartBarras(e.target.value));
 
 const porAdmin = {};
 fondos.forEach(f=>{

@@ -79,8 +79,8 @@ AGENTES = {
     "Santander": AgenteSantander,
 }
 
-CAMPOS_META = ["moneda", "plazo", "n_activos"]
-CAMPOS_META_HEADERS = ["Moneda", "Plazo/Duracion", "N Activos"]
+CAMPOS_META = ["moneda", "plazo", "n_activos", "fecha_reporte"]
+CAMPOS_META_HEADERS = ["Moneda", "Plazo/Duracion", "N Activos", "Fecha Reporte"]
 
 HEADERS = [
     "Fecha actualizacion", "Administradora", "Fondo", "Archivo",
@@ -294,6 +294,57 @@ def actualizar_registro(resultados: list[dict]) -> None:
     wb.save(REGISTRO_FILE)
 
 
+def actualizar_historico(resultados: list[dict]) -> None:
+    """Agrega una fila por fondo a la hoja 'Historico' de registro_rentabilidad.xlsx
+    (una fila por fondo y por fecha de reporte, para poder graficar la evolucion
+    en el tiempo). No se pisa nada de lo que ya habia: solo se agregan filas
+    nuevas, y se evita duplicar si el fondo no tiene un reporte mas reciente
+    que el ya guardado (mismo 'Fecha Reporte' que la ultima fila de ese fondo)."""
+    if not REGISTRO_FILE.exists():
+        return
+    wb = load_workbook(REGISTRO_FILE)
+
+    if "Historico" not in wb.sheetnames:
+        ws = wb.create_sheet("Historico")
+        ws.append(HEADERS)
+        for col in range(1, len(HEADERS) + 1):
+            cell = ws.cell(row=1, column=col)
+            cell.fill = HEADER_FILL
+            cell.font = HEADER_FONT
+            cell.alignment = Alignment(horizontal="center")
+    else:
+        ws = wb["Historico"]
+
+    i_fecha_reporte = HEADERS.index("Fecha Reporte")
+    i_adm = HEADERS.index("Administradora")
+    i_fondo = HEADERS.index("Fondo")
+
+    ultima_fecha_reporte = {}
+    for fila in ws.iter_rows(min_row=2, values_only=True):
+        if len(fila) <= max(i_adm, i_fondo, i_fecha_reporte):
+            continue
+        ultima_fecha_reporte[(fila[i_adm], fila[i_fondo])] = fila[i_fecha_reporte]
+
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
+    agregadas = 0
+    for r in resultados:
+        key = (r["administradora"], r["fondo"])
+        fecha_reporte_nueva = r.get("fecha_reporte")
+        if fecha_reporte_nueva and ultima_fecha_reporte.get(key) == fecha_reporte_nueva:
+            continue  # mismo reporte que la ultima vez -> no duplicar fila
+
+        fila = [fecha, r["administradora"], r["fondo"], r["archivo"]]
+        fila += [r.get(c) for c in CAMPOS_REGISTRO]
+        fila += [r.get(c) for c in CAMPOS_META]
+        fila += [r.get("estado", ""), r.get("notas", "")]
+        ws.append(fila)
+        agregadas += 1
+
+    wb.save(REGISTRO_FILE)
+    if agregadas:
+        print(f"Historico: {agregadas} fila(s) nueva(s) agregada(s).")
+
+
 def escribir_json(resultados: list[dict]) -> None:
     if REGISTRO_FILE.exists():
         wb = load_workbook(REGISTRO_FILE)
@@ -344,16 +395,24 @@ def main():
 
     resultados = asyncio.run(ejecutar(args.adm, args.solo_fallidos))
 
+    sys.path.insert(0, str(BASE))
+
     if resultados:
         actualizar_registro(resultados)
+        actualizar_historico(resultados)
         escribir_json(resultados)
         resumen(resultados)
 
-        sys.path.insert(0, str(BASE))
         import build_diagnostico
         build_diagnostico.main()
-    else:
-        print("Registro y diagnostico no se modificaron.")
+
+    # El dashboard se regenera siempre (incluso sin resultados nuevos) para
+    # que "python master.py" sea el unico comando que deja todo al dia.
+    import build_dashboard
+    build_dashboard.main()
+
+    if not resultados:
+        print("Registro y diagnostico no se modificaron (sin fondos procesados en esta corrida).")
 
 
 if __name__ == "__main__":

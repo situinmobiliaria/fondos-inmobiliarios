@@ -11,12 +11,20 @@ Particularidades:
   Por eso este agente no reutiliza buscar_pct() (que toma el primero) sino
   que busca el ultimo porcentaje dentro de una ventana corta despues de la
   etiqueta.
-- LTV y Leverage SI estan en el PDF pero como texto dentro de un grafico de
-  barras (los numeros del eje/las barras quedan entremezclados sin poder
-  asociarlos de forma confiable a "el valor mas reciente"), por lo que se
-  dejan vacios en vez de arriesgar un valor incorrecto -- a diferencia del
-  diagnostico anterior (que marcaba TODO el fondo como "sin extraer"), aqui
-  al menos Rentabilidad 12M / Dividend Yield / TIR si quedan disponibles.
+- LTV: el grafico "Loan to Value Total (LTV)" SI trae sus valores como texto
+  real en el PDF (etiquetas de dato pegadas a cada punto de la linea), solo
+  que pdfplumber los entremezcla con el resto de la pagina al leer en orden
+  de flujo. AgenteBase.leer_ultimo_valor_grafico() (Ronda 2, tecnica 1:
+  separar por posicion x/y en vez de por orden de lectura) los recupera
+  correctamente -- se valido a mano contra el PDF: devuelve el valor del
+  punto mas a la derecha (2026), que coincide con la etiqueta impresa "40%".
+- Leverage: el grafico titulado "Leverage (%)" en realidad grafica DOS
+  cosas -- barras de deuda (DFN Fondo/DFN Agregada, eje izquierdo en UF) y
+  una LINEA que es "Tasa promedio deuda financiera" (NO Leverage), en el eje
+  derecho. leer_ultimo_valor_grafico() encuentra esa linea igual (por
+  cercania al titulo), pero estaria devolviendo la tasa de interes
+  promedio, no el leverage -- por eso NO se usa aqui: se deja vacio en vez
+  de cargar un numero con la etiqueta equivocada.
 """
 from __future__ import annotations
 
@@ -68,16 +76,19 @@ class AgenteIndependencia(AgenteBase):
             r["plazo"] = f"{m_ini.group(1)} – vencimiento {m_venc.group(1)}"
         # n_activos ya viene de extraer_metadatos_comunes via "Numero de propiedades"
 
-        campos_ok = [k for k in ("Rent. 12M (1A)", "Dividend Yield", "TIR") if r.get(k)]
-        if len(campos_ok) == 3:
+        ltv = self.leer_ultimo_valor_grafico(pdf_path, "Loan to Value")
+        if ltv:
+            r["LTV"] = ltv
+
+        campos_ok = [k for k in ("Rent. 12M (1A)", "Dividend Yield", "TIR", "LTV") if r.get(k)]
+        if campos_ok:
             r["estado_categoria"] = "F"
             r["estado"] = "Rentabilidad extraida parcialmente"
-            r["notas"] = ("LTV y Leverage estan en grafico de barras (numeros no asociables de forma "
-                          "confiable a la columna vigente); Rentabilidad 12M / Dividend Yield / TIR "
-                          "son sobre valor libro, no bursatil.")
-        elif campos_ok:
-            r["estado_categoria"] = "F"
-            r["estado"] = "Rentabilidad extraida parcialmente"
+            notas = ["Rentabilidad 12M / Dividend Yield / TIR son sobre valor libro, no bursatil."]
+            if ltv:
+                notas.append("LTV leido de las etiquetas de dato del grafico 'Loan to Value Total (LTV)' (por posicion, no por orden de lectura del texto).")
+            notas.append("Leverage esta en un grafico cuya unica linea es 'Tasa promedio deuda financiera' (no Leverage en si) -> se deja vacio para no cargar el dato equivocado.")
+            r["notas"] = " ".join(notas)
         else:
             r["estado_categoria"] = "E"
             r["estado"] = "No se pudo extraer rentabilidad del texto"

@@ -333,6 +333,77 @@ class AgenteBase:
         m = re.search(rf"(\d+[.,]?\d*)\s*{re.escape(sufijo)}", snippet)
         return m.group(1).replace(".", ",") if m else None
 
+    @staticmethod
+    def leer_ultimo_valor_grafico(pdf_path: Path, titulo_grafico: str,
+                                   ventana_vertical: float = 80,
+                                   sufijo: str = "%") -> Optional[str]:
+        """Tecnica 1 de lectura de graficos (Ronda 2, seccion 2.1): cuando un
+        grafico de lineas/barras trae sus VALORES como etiquetas de texto
+        reales en el PDF (no como imagen), pdfplumber los puede leer -- el
+        problema es que quedan revueltos con el resto de la pagina al usar
+        extract_text() plano, porque pdfplumber no sabe que forman parte de
+        un grafico.
+
+        Esta funcion usa las coordenadas (x0, top) de cada palabra para
+        separar dos grupos que se confunden facilmente:
+          - las etiquetas del EJE (habitualmente todas en la misma columna
+            x0, a intervalos verticales regulares: son la escala del grafico,
+            no un dato)
+          - las etiquetas de DATO (una por punto/barra, cada una en su propia
+            columna x0, cerca de su marca en el grafico)
+        Se descarta la columna x0 mas repetida (el eje) y se toma el valor
+        de dato con mayor x0 = el mas a la derecha = el mas reciente
+        (asumiendo, como en todos los grafos de evolucion vistos, que el
+        tiempo avanza de izquierda a derecha).
+
+        Devuelve el valor como string (ej. "40") o None si no se pudo
+        determinar con confianza (menos de 2 candidatos, o todos en la
+        misma columna == parecen ser todos eje).
+        """
+        import pdfplumber
+
+        patron = re.compile(rf"^-?\d+[.,]?\d*{re.escape(sufijo)}$")
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                for page in pdf.pages:
+                    palabras = page.extract_words()
+                    titulo_word = None
+                    idx_by_top = {}
+                    for w in palabras:
+                        idx_by_top.setdefault(round(w["top"]), []).append(w)
+                    texto_pagina = " ".join(w["text"] for w in palabras)
+                    if titulo_grafico.replace(" ", "") not in texto_pagina.replace(" ", ""):
+                        continue
+
+                    # ubicar el top del titulo (primera palabra del titulo)
+                    primera_palabra_titulo = titulo_grafico.split()[0]
+                    candidatos_titulo = [w for w in palabras if w["text"].startswith(primera_palabra_titulo[:4])]
+                    if not candidatos_titulo:
+                        continue
+                    top_titulo = min(w["top"] for w in candidatos_titulo)
+
+                    en_ventana = [w for w in palabras
+                                  if top_titulo <= w["top"] <= top_titulo + ventana_vertical
+                                  and patron.match(w["text"])]
+                    if len(en_ventana) < 2:
+                        continue
+
+                    # agrupar por columna x0 (redondeado) para detectar el eje
+                    from collections import Counter
+                    cont_x0 = Counter(round(w["x0"] / 3) * 3 for w in en_ventana)
+                    x0_eje = cont_x0.most_common(1)[0][0] if cont_x0 else None
+                    n_en_eje = cont_x0.most_common(1)[0][1] if cont_x0 else 0
+
+                    datos = [w for w in en_ventana if round(w["x0"] / 3) * 3 != x0_eje] if n_en_eje >= 3 else en_ventana
+                    if not datos:
+                        continue
+                    datos.sort(key=lambda w: w["x0"])
+                    valor = datos[-1]["text"].rstrip(sufijo)
+                    return valor.replace(".", ",")
+        except Exception:
+            return None
+        return None
+
     async def run_standalone(self):
         """python -m agentes.<modulo>: corre descargar+inspeccionar+extraer
         para todos los fondos de esta administradora usando el listado
