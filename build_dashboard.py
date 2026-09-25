@@ -239,11 +239,36 @@ header .meta{color:var(--gris-medio);font-size:.85rem;text-align:right;}
 section{margin-bottom:36px;}
 h2{font-size:1.05rem;font-weight:700;border-bottom:1px solid var(--borde);padding-bottom:8px;margin-bottom:14px;color:var(--gris-oscuro);}
 
-.charts-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:10px;}
+.charts-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:10px;align-items:start;}
 @media (max-width:900px){.charts-grid{grid-template-columns:1fr;}}
-.chart-box{background:var(--gris-claro);border-radius:6px;padding:14px;overflow-x:auto;}
+.charts-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:10px;}
+@media (max-width:900px){.charts-grid-3{grid-template-columns:1fr;}}
+.chart-box{background:var(--gris-claro);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.chart-box .chart-canvas-wrap{position:relative;width:100%;height:260px;overflow-x:auto;}
+.chart-box .chart-canvas-wrap.alto{height:420px;}
+.chart-box .chart-canvas-wrap.bajo{height:190px;}
 .chart-box canvas{max-width:100%;}
-.chart-tall{height:420px;}
+.chart-nota{font-size:.72rem;color:var(--gris-medio);margin:0;}
+.chart-subtitulo{font-size:.85rem;font-weight:500;color:var(--gris-oscuro);margin:0 0 10px;}
+
+.insight{background:var(--gris-claro);border-left:3px solid var(--burdeo);border-radius:6px;
+  padding:12px 16px;font-size:.85rem;line-height:1.5;color:var(--gris-oscuro);}
+.insight b{color:var(--burdeo);}
+
+.rank-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:7px 0;border-bottom:1px solid var(--gris-claro2);font-size:.82rem;}
+.rank-row:last-child{border-bottom:none;}
+.rank-row .nombre{color:var(--gris-oscuro);}
+.rank-row .nombre .adm{color:var(--gris-medio);font-size:.72rem;display:block;}
+.rank-row .valor{font-weight:700;white-space:nowrap;}
+
+.rango-tabla{width:100%;font-size:.78rem;border-collapse:collapse;}
+.rango-tabla th{text-align:left;color:var(--gris-medio);font-weight:500;padding:4px 6px;border-bottom:1px solid var(--gris-claro2);}
+.rango-tabla td{padding:5px 6px;border-bottom:1px solid var(--gris-claro2);}
+.rango-tabla td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.rango-barra{position:relative;height:6px;background:var(--gris-claro2);border-radius:3px;min-width:70px;}
+.rango-barra .rel{position:absolute;top:0;height:100%;background:var(--burdeo2);border-radius:3px;}
+.rango-barra .punto{position:absolute;top:-2px;width:2px;height:10px;background:var(--gris-oscuro);}
 
 table{width:100%;border-collapse:collapse;font-size:.82rem;}
 thead th{
@@ -296,12 +321,37 @@ footer{color:var(--gris-medio);font-size:.75rem;text-align:center;padding-top:20
 <section class="kpis" id="kpis"></section>
 
 <section>
+  <p class="insight" id="insight-texto"></p>
+</section>
+
+<section>
   <h2>Rentabilidad y calidad de los datos</h2>
   <div class="charts-grid">
-    <div class="chart-box chart-tall"><canvas id="chartBarras12m"></canvas></div>
     <div class="chart-box">
-      <canvas id="chartPromAdmin" style="margin-bottom:16px;"></canvas>
-      <canvas id="chartScatter"></canvas>
+      <div class="chart-canvas-wrap alto"><canvas id="chartBarras12m"></canvas></div>
+      <p class="chart-nota">Solo fondos con Rentabilidad 12M disponible.</p>
+    </div>
+    <div class="chart-box">
+      <div class="chart-canvas-wrap bajo"><canvas id="chartPromAdmin"></canvas></div>
+      <div class="chart-canvas-wrap bajo"><canvas id="chartScatter"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Ranking y comparación por administradora</h2>
+  <div class="charts-grid-3" id="ranking-grid">
+    <div class="chart-box">
+      <h3 class="chart-subtitulo">Mejores 5 (Rent. 12M)</h3>
+      <div id="ranking-top"></div>
+    </div>
+    <div class="chart-box">
+      <h3 class="chart-subtitulo">Peores 5 (Rent. 12M)</h3>
+      <div id="ranking-bottom"></div>
+    </div>
+    <div class="chart-box">
+      <h3 class="chart-subtitulo">Rango por administradora (Rent. 12M)</h3>
+      <div id="rango-admin"></div>
     </div>
   </div>
 </section>
@@ -309,8 +359,12 @@ footer{color:var(--gris-medio);font-size:.75rem;text-align:center;padding-top:20
 <section>
   <h2>Composición de la cartera</h2>
   <div class="charts-grid">
-    <div class="chart-box"><canvas id="chartMoneda"></canvas></div>
-    <div class="chart-box"><canvas id="chartTipo"></canvas></div>
+    <div class="chart-box">
+      <div class="chart-canvas-wrap bajo"><canvas id="chartMoneda"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-canvas-wrap bajo"><canvas id="chartTipo"></canvas></div>
+    </div>
   </div>
 </section>
 
@@ -517,6 +571,83 @@ document.getElementById('modal-overlay').addEventListener('click', e=>{
 // ---- Charts ----
 // Chart.js va incrustado en este mismo archivo (ver build_dashboard.py / vendor/chart.umd.min.js),
 // asi que funciona sin internet. El try/catch queda como resguardo defensivo nada mas.
+const CHART_BASE = {
+  responsive:true,
+  maintainAspectRatio:false,
+  layout:{padding:{top:4,right:8,bottom:0,left:4}},
+};
+
+// ---- Insight narrativo (texto auto-generado a partir de los datos) ----
+(function(){
+  const conR12 = fondos.filter(f=>f['Rent. 12M (1A)']!=null);
+  if(!conR12.length){ document.getElementById('insight-texto').style.display='none'; return; }
+  const mejor = conR12.reduce((a,b)=> b['Rent. 12M (1A)']>a['Rent. 12M (1A)'] ? b : a);
+  const peor = conR12.reduce((a,b)=> b['Rent. 12M (1A)']<a['Rent. 12M (1A)'] ? b : a);
+  const conDy = fondos.filter(f=>f['Dividend Yield']!=null);
+  const dyProm = conDy.length ? (conDy.reduce((s,f)=>s+f['Dividend Yield'],0)/conDy.length) : null;
+  const monedaConocida = fondos.filter(f=>f.moneda).length;
+  const negativos = conR12.filter(f=>f['Rent. 12M (1A)']<0).length;
+  document.getElementById('insight-texto').innerHTML =
+    `De los <b>${fondos.length} fondos</b> del listado, <b>${conR12.length}</b> tienen Rentabilidad 12M disponible ` +
+    `(el resto queda "Sin dato" porque el factsheet no la reporta en texto). En ese grupo, ` +
+    `<b>${mejor.fondo}</b> (${mejor.administradora}) lidera con <b>${fmtPct(mejor['Rent. 12M (1A)'])}</b>, mientras ` +
+    `<b>${peor.fondo}</b> (${peor.administradora}) muestra la más baja con <b>${fmtPct(peor['Rent. 12M (1A)'])}</b>. ` +
+    `${negativos} fondo(s) tienen rentabilidad 12M negativa. El Dividend Yield promedio (${conDy.length} fondos) es ` +
+    `<b>${dyProm!==null?fmtPct(dyProm):'—'}</b>. La moneda de referencia se identificó para <b>${monedaConocida} de ${fondos.length}</b> fondos.`;
+})();
+
+// ---- Ranking top/bottom 5 (HTML, no chart -- mas legible que otro grafico) ----
+(function(){
+  const conR12 = fondos.filter(f=>f['Rent. 12M (1A)']!=null).sort((a,b)=>b['Rent. 12M (1A)']-a['Rent. 12M (1A)']);
+  const fila = f => `<div class="rank-row"><span class="nombre">${f.fondo}<span class="adm">${f.administradora}</span></span>` +
+    `<span class="valor ${pctClass(f['Rent. 12M (1A)'])}">${fmtPct(f['Rent. 12M (1A)'])}</span></div>`;
+  document.getElementById('ranking-top').innerHTML = conR12.slice(0,5).map(fila).join('') || '<p class="chart-nota">Sin datos.</p>';
+  document.getElementById('ranking-bottom').innerHTML = conR12.slice(-5).reverse().map(fila).join('') || '<p class="chart-nota">Sin datos.</p>';
+})();
+
+// ---- Rango (min/prom/max) por administradora -- tabla, no grafico de 2 ejes ----
+(function(){
+  const porAdmin = {};
+  fondos.forEach(f=>{
+    if(f['Rent. 12M (1A)']==null) return;
+    (porAdmin[f.administradora] ??= []).push(f['Rent. 12M (1A)']);
+  });
+  const filas = Object.entries(porAdmin).map(([adm, vals])=>({
+    adm, n:vals.length,
+    min:Math.min(...vals), max:Math.max(...vals),
+    prom: vals.reduce((s,v)=>s+v,0)/vals.length,
+  })).sort((a,b)=>b.prom-a.prom);
+
+  if(!filas.length){ document.getElementById('rango-admin').innerHTML='<p class="chart-nota">Sin datos.</p>'; return; }
+  const globalMin = Math.min(...filas.map(f=>f.min)), globalMax = Math.max(...filas.map(f=>f.max));
+  const span = (globalMax - globalMin) || 1;
+  const pct = v => ((v - globalMin) / span * 100);
+
+  document.getElementById('rango-admin').innerHTML = `
+    <table class="rango-tabla">
+      <thead><tr><th>Administradora</th><th class="num">N</th><th class="num">Prom.</th><th style="min-width:90px;">Rango</th></tr></thead>
+      <tbody>
+        ${filas.map(f=>`
+          <tr>
+            <td>${f.adm}</td>
+            <td class="num">${f.n}</td>
+            <td class="num ${pctClass(f.prom)}">${fmtPct(f.prom)}</td>
+            <td>
+              <div class="rango-barra">
+                <div class="rel" style="left:${pct(f.min)}%; width:${Math.max(pct(f.max)-pct(f.min),2)}%;"></div>
+                <div class="punto" style="left:${pct(f.prom)}%;"></div>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <p class="chart-nota">Barra: rango min–max de Rent. 12M dentro de la administradora; marca = promedio.</p>
+  `;
+})();
+
+// ---- Charts ----
+// Chart.js va incrustado en este mismo archivo (ver build_dashboard.py / vendor/chart.umd.min.js),
+// asi que funciona sin internet. El try/catch queda como resguardo defensivo nada mas.
 try {
 if (typeof Chart === 'undefined') throw new Error('Chart.js no disponible (el bundle incrustado no se cargo correctamente)');
 
@@ -532,9 +663,11 @@ new Chart(document.getElementById('chartBarras12m'), {
       data: conRent12.map(f=>f['Rent. 12M (1A)']),
       backgroundColor: conRent12.map(f=> f['Rent. 12M (1A)']<0 ? '#96323C' : '#2D3334'),
       borderRadius:2,
+      barThickness: 10,
     }]
   },
   options:{
+    ...CHART_BASE,
     indexAxis:'y',
     plugins:{legend:{display:false}, title:{display:true, text:'Rentabilidad 12M por fondo', color:'#2D3334', font:{size:13}}},
     scales:{
@@ -559,7 +692,8 @@ new Chart(document.getElementById('chartPromAdmin'), {
     datasets:[{label:'Rent. 12M promedio (%)', data: adminProm, backgroundColor:'#96323C', borderRadius:2}]
   },
   options:{
-    plugins:{legend:{display:false}, title:{display:true, text:'Rentabilidad 12M promedio por administradora', color:'#2D3334', font:{size:13}}},
+    ...CHART_BASE,
+    plugins:{legend:{display:false}, title:{display:true, text:'Rent. 12M promedio por administradora', color:'#2D3334', font:{size:12}}},
     scales:{ x:{ticks:{font:{size:9}}}, y:{ticks:{callback:v=>v+'%'}, grid:{color:'#E6E7E8'}} }
   }
 });
@@ -574,34 +708,37 @@ new Chart(document.getElementById('chartScatter'), {
       label:'Fondos',
       data: conDyLtv.map(f=>({x:f['LTV'], y:f['Dividend Yield'], f})),
       backgroundColor:'#A26579',
+      radius:5,
     }]
   },
   options:{
+    ...CHART_BASE,
     plugins:{
       legend:{display:false},
-      title:{display:true, text:'Dividend Yield vs LTV', color:'#2D3334', font:{size:13}},
+      title:{display:true, text:'Dividend Yield vs LTV', color:'#2D3334', font:{size:12}},
       tooltip:{callbacks:{label:ctx=>ctx.raw.f.fondo+': DY '+ctx.raw.y+'%, LTV '+ctx.raw.x+'%'}}
     },
     scales:{
-      x:{title:{display:true,text:'LTV (%)'}, grid:{color:'#E6E7E8'}},
-      y:{title:{display:true,text:'Dividend Yield (%)'}, grid:{color:'#E6E7E8'}}
+      x:{title:{display:true,text:'LTV (%)', font:{size:10}}, grid:{color:'#E6E7E8'}},
+      y:{title:{display:true,text:'Dividend Yield (%)', font:{size:10}}, grid:{color:'#E6E7E8'}}
     }
   }
 });
 
 // Composicion: moneda y tipo de fondo
-const PALETA = ['#96323C','#A26579','#D7A1A7','#51313C','#5B6670','#2D3334'];
 const porMoneda = {};
 fondos.forEach(f=>{ const m = f.moneda || 'Sin dato'; porMoneda[m] = (porMoneda[m]||0)+1; });
 new Chart(document.getElementById('chartMoneda'), {
   type:'doughnut',
   data:{
-    labels: Object.keys(porMoneda),
-    datasets:[{ data: Object.values(porMoneda), backgroundColor: PALETA }]
+    labels: Object.keys(porMoneda).map(m=>`${m} (${porMoneda[m]})`),
+    datasets:[{ data: Object.values(porMoneda), backgroundColor:['#96323C','#5B6670','#D7A1A7','#51313C'] }]
   },
   options:{
+    ...CHART_BASE,
+    cutout:'60%',
     plugins:{
-      legend:{position:'bottom', labels:{color:'#2D3334', font:{size:11}}},
+      legend:{position:'bottom', labels:{color:'#2D3334', font:{size:11}, boxWidth:12}},
       title:{display:true, text:'Fondos por moneda', color:'#2D3334', font:{size:13}}
     }
   }
@@ -616,17 +753,17 @@ new Chart(document.getElementById('chartTipo'), {
     datasets:[{ label:'N° de fondos', data: Object.values(porTipo), backgroundColor:'#5B6670', borderRadius:2 }]
   },
   options:{
+    ...CHART_BASE,
     plugins:{legend:{display:false}, title:{display:true, text:'Fondos por tipo', color:'#2D3334', font:{size:13}}},
-    scales:{ y:{ticks:{stepSize:1}, grid:{color:'#E6E7E8'}} }
+    scales:{ y:{ticks:{stepSize:2}, grid:{color:'#E6E7E8'}} }
   }
 });
 
 } catch(e) {
   console.warn('Graficos no disponibles:', e.message);
-  document.querySelectorAll('.chart-box').forEach(el=>{
+  document.querySelectorAll('.chart-canvas-wrap').forEach(el=>{
     el.innerHTML = '<p style="color:var(--gris-medio);font-size:.8rem;padding:20px;">'
-      + 'No se pudieron cargar los gráficos (error inesperado del bundle de Chart.js incrustado). '
-      + 'La tabla de abajo funciona igual.</p>';
+      + 'No se pudo cargar el grafico (error inesperado del bundle de Chart.js incrustado).</p>';
   });
 }
 </script>
